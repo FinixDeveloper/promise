@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <style>
+        
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+.disclaimer-cont{
+    background-color: red;
+}
+
+.disclaimer{
+    background-color: rgb(253, 7, 7);
+    color: rgb(250, 248, 248);
+    font-weight:1000;
+    font-size: 20px;
+    padding: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+
+    /* animation properties */
+    -moz-transform: translateX(100%);
+    -webkit-transform: translateX(100%);
+    transform: translateX(100%);
+    animation: my-animation 20s linear infinite;
+}
+  
+  /* for Firefox */
+  @keyframes my-animation {
+    from {
+      -moz-transform: translateX(100%);
+      -webkit-transform: translateX(100%);
+      transform: translateX(100%);
+    }
+    to {
+      -moz-transform: translateX(-100%);
+      -webkit-transform: translateX(-100%);
+      transform: translateX(-100%);
+    }
+}
+
+.header{
+    background-color: #4FA537;
+}
+#currentStatus{
+    color: white;
+    font-size: 30px;
+    padding: 24px 0 8px;
+    text-align: center;
+    font-weight: bold;
+}
+.statuses{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+    font-size: 25px;
+}
+.badge{
+    background-color: #5bc03f;
+    font-weight: bold;
+    padding: 4px 16px;
+    border-radius: 4px;
+    margin: 10px;
+    display: inline-flex;
+    color:white;
+    border: 1px solid rgba(255,255,255,0.75);
+}
+#status-time{
+    animation: blinking 2s linear infinite;
+}
+@keyframes blinking {
+    0% { opacity: 1.0; }
+    50% { opacity: 0.0; }
+    100% { opacity: 1.0; }
+}
+
+.mapview{
+    height: 400px;
+    width: 100%;
+    background-color: grey;
+}
+.mapview img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: .5;
+}
+
+#driver-details{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    padding: 16px;
+    background-color: white;
+}
+.driver-photo,.call{
+    width: 100px;
+    height: 100px;
+    display: inline-block;
+    object-fit: cover;
+}
+.call{
+    height: 32px;
+    width: 32px;
+}
+.driver-status{
+    padding: 16px;
+    flex:1;
+}
+.driver-into{
+    font-size: 18px;
+    font-weight: 600;
+}
+.driver-msg{
+    padding-top:2px;
+    font-size: 14px;
+}
+.none{
+    display: none;
+}
+
+button{
+    padding: 8px;
+    margin: 0 10px;
+}
+    </style>    
+</head>
+<body>
+    <div class="disclaimer-cont">
+        <div class="disclaimer">
+            Hi Lets go Zomato Delivery Process - guvi Project Task!!!
+        </div>
+    </div>
+
+    <div class="header">
+        <p id="currentStatus">Waiting for restaurant acceptance...</p>
+        <div class="statuses">
+            <p id="status" class="badge">On time 😊</p>
+            <p id="status-time" class="badge">Arriving in 25 mins</p>
+        </div>
+
+        <div class="mapview">
+            <img id="mapview" src="https://assets-global.website-files.com/6050a76fa6a633d5d54ae714/609147088669907f652110b0_report-an-issue(about-maps).jpeg" alt="">
+        </div>
+
+        <div id="driver-details">
+            <img class="driver-photo" src="https://i.postimg.cc/cC1ppVwL/a75e2f85004206915e5430120f9a65d2.jpg" alt="">
+            <div class="driver-status none" id="found-driver">
+                <p class="driver-into">Hello, I'm Praveen your valet.</p>
+                <p class="driver-msg">I can speak English and Tamil</p>
+            </div>
+            <div class="driver-status" id="finding-driver">
+                <p class="driver-into">We are searching for nearby valet...</p>
+            </div>
+            <img class="call none" id="call" src="https://cdn-icons-png.flaticon.com/512/5070/5070407.png" alt="">
+        </div>
+        <button id="acceptOrder" type="button" class="btn btn-warning">Ask for Restaurant Order 1</button>
+        <button id="findValet" type="button" class="btn btn-primary">Lets Find valet 2</button>
+        <button id="deliverOrder" type="button" class="btn btn-danger">Deliver Order 3</button>
+        
+    </div>
+    <script>
+
+let isOrderAccepted = false;
+let isValetFound = false;
+let hasRestaurantSeenYourOrder = false;
+let restaurantTimer = null;
+let valetTimer = null;
+let valetDeliveryTimer = null;
+let isOrderDelivered = false;
+
+
+// Zomato App - Boot up/ Power Up/ Start 
+window.addEventListener('load',function(){
+    document.getElementById('acceptOrder').addEventListener('click',function(){
+        askRestaurantToAcceptOrReject();
+    });
+
+    document.getElementById('findValet').addEventListener('click',function(){
+        startSearchingForValets();
+    })
+
+    this.document.getElementById('deliverOrder').addEventListener('click',function(){
+        setTimeout(() => {
+            isOrderDelivered = true;
+        }, 2000); 
+    })
+
+    checkIfOrderAcceptedFromRestaurant()
+        .then(isOrderAccepted=>{
+            console.log('updated from restaurant - ',isOrderAccepted);
+
+            // Step - Start preparing
+            if (isOrderAccepted) startPreparingOrder();
+            // Step 3 - Order rejected
+            else alert('Sorry restaurant couldnt accept your order! Returing your amount with zomato shares');
+        })
+        .catch(err=>{
+            console.error(err);
+            alert('Something went wrong! Please try again later');
+        })
+})
+
+
+//Step 1 - Check whether restaurant accepted order or not
+function askRestaurantToAcceptOrReject(){
+    // callback
+    setTimeout(() => {
+        isOrderAccepted = confirm('Should restaurant accept order?');
+        hasRestaurantSeenYourOrder = true;
+    }, 1000);
+    
+}
+
+//Step 2 - Check if Restaruant has accepted order
+function checkIfOrderAcceptedFromRestaurant() {
+    // Promise - resolve or reject 
+    return new Promise((resolve, reject) => {
+        restaurantTimer = setInterval(()=>{
+            console.log('checking if order accepted or not');
+            if (!hasRestaurantSeenYourOrder) return;
+
+            if (isOrderAccepted) resolve(true);
+            else resolve(false);
+
+            clearInterval(restaurantTimer);
+        },2000);
+    });
+}
+
+
+// Step 4 - start preparing
+function startPreparingOrder(){
+    Promise.allSettled([
+        updateOrderStatus(),
+        updateMapView(),
+        checkIfValetAssigned(),
+        checkIfOrderDelievered()
+    ])
+    .then(res=>{
+        console.log(res);
+        setTimeout(()=>{
+            alert('How was your food? Rate your food and delivery partner');
+        },5000);
+    })
+    .catch(err=>{
+        console.error(err);
+    })
+}
+
+// Helper functions - Pure functions
+function updateOrderStatus(){
+    return new Promise((resolve,reject)=>{
+        setTimeout(()=>{
+            document.getElementById('currentStatus').innerText = isOrderDelivered ? 'Order Delivered successfully' : 'Preparing your order';
+            resolve('status updated');
+        },1500);
+    })
+}
+
+function updateMapView(){
+    // Fake delay to get data
+    return new Promise((resolve,reject)=>{
+        setTimeout(() => {
+            document.getElementById('mapview').style.opacity = '1';
+            resolve('map initialised');
+        }, 1000);
+    });
+}
+
+function startSearchingForValets(){
+    // BED
+    // Bht complex operations:-
+    /**
+     * 1. Get all locations of nearby valets
+     * 2. Sort the valets based on shortes path of restaurant 
+     * + to customer home
+     * 3. Select the valet with shortest distance and minimum orders
+     */
+
+    // Step 1 - get valets
+    const valetsPromises = [];
+    for (let i = 0;i<5;i++) {
+        valetsPromises.push(getRandomDriver());
+    }
+    console.log(valetsPromises);
+
+    Promise.any(valetsPromises)
+    .then(selectedValet =>{
+        console.log('Selected a valet => ',selectedValet);
+        isValetFound = true;
+    })
+    .catch(err=>{
+        console.error(err);
+    })
+}
+
+function getRandomDriver(){
+    // Fake delay to get location data from riders
+    return new Promise((resolve,reject)=>{
+        const timeout = Math.random()*1000;
+        setTimeout(() => {
+            resolve('Valet - '+timeout);
+        }, timeout);
+    });
+}
+
+function checkIfValetAssigned(){
+    return new Promise((resolve, reject)=>{
+        valetTimer = setInterval(() => {
+            console.log(' searching for valet');
+            if (isValetFound) {
+                updateValetDetails();
+                resolve('updated valet details');
+                clearTimeout(valetTimer);
+            }
+        }, 1000);
+    })
+}
+
+function checkIfOrderDelievered(){
+    return new Promise((resolve, reject)=>{
+        valetDeliveryTimer = setInterval(() => {
+            console.log('is order delivered by valet');
+            if (isOrderDelivered) {
+                resolve('order delivered valet details');
+                updateOrderStatus();
+                clearTimeout(valetDeliveryTimer);
+            }
+        }, 1000);
+    })
+}
+
+function updateValetDetails(){
+    if (isValetFound){
+        document.getElementById('finding-driver').classList.add('none');
+
+        document.getElementById('found-driver').classList.remove('none');
+        document.getElementById('call').classList.remove('none');
+    }
+}
+
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js" integrity="sha384-IQsoLXl5PILFhosVNubq5LC7Qb9DXgDA9i+tQ8Zj3iwWAwPtgFTxbJ8NT4GN1R8p" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js" integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF" crossorigin="anonymous"></script>
+
+</body>
+</html>
